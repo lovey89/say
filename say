@@ -1,0 +1,51 @@
+#!/bin/bash
+
+string_length() {
+  TEMP=$(echo "${1}" | sed -r 's/\x1b\[[0-9;]*m//g')
+  echo "${#TEMP}"
+}
+
+MAX_LENGTH=0
+while IFS= read -r line; do
+  LINE_LENGTH=$(string_length "$line")
+
+  if (( LINE_LENGTH > MAX_LENGTH )); then
+    MAX_LENGTH=$LINE_LENGTH
+  fi
+  lines+=( "$line" )
+done
+
+echo -n "  .--"
+for (( i=0; i<MAX_LENGTH; i++ )); do
+  echo -n "-"
+done
+echo "."
+
+for line in "${lines[@]}"; do
+  echo -n "  | "
+  LINE_LENGTH=$(string_length "$line")
+  PAD=$(( MAX_LENGTH - LINE_LENGTH ))
+  line="${last_color}${line}"
+
+  last_color=$(echo "$line" | sed -rn 's/.*(\x1b\[[0-9;]*m).*/\1/p')
+  echo -n "$line"
+  if [ -n "$last_color" ]; then
+    if [ "$last_color" = $'\x1b[0m' ]; then
+      last_color=""
+    else
+      echo -en "\033[0m"
+    fi
+  fi
+  for (( i=0; i<PAD; i++ )); do
+    echo -n " "
+  done
+  echo " |"
+done
+
+echo -en '\033[0m  `--'
+for (( i=0; i<MAX_LENGTH; i++ )); do
+  echo -n "-"
+done
+echo '´'
+
+# Image code here
